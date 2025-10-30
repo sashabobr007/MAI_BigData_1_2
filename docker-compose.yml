@@ -1,0 +1,113 @@
+services:
+  db:
+    image: postgres:15
+    container_name: highload_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: highload
+      POSTGRES_DB: highload_db
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+      - ./data:/tmp/data
+    ports:
+      - 5432:5432
+    networks:
+      - bigdata-network
+
+  pyspark-notebook:
+    image: ruslanmv/pyspark-notebook:3.1.2
+    ports:
+      - "8888:8888"
+    environment:
+      - GRANT_SUDO=yes
+    user: root
+    volumes:
+      - ./postgresql-42.7.8.jar:/opt/spark/jars/postgresql-42.7.8.jar
+      - ./clickhouse-jdbc-0.9.2-all-dependencies.jar:/opt/spark/jars/clickhouse-jdbc-0.9.2-all-dependencies.jar
+      - ./notebooks:/home/jovyan/work
+    networks:
+      - bigdata-network
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native protocol
+    environment:
+      CLICKHOUSE_DB: mydb
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: password
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - bigdata-network
+
+  # cassandra:
+  #   image: cassandra:latest
+  #   container_name: cassandra
+  #   environment:
+  #     - CASSANDRA_CLUSTER_NAME=MyCluster
+  #   ports:
+  #     - "9042:9042"  # CQL port
+  #   volumes:
+  #     - cassandra_data:/var/lib/cassandra
+  #   networks:
+  #     - bigdata-network
+
+  # neo4j:
+  #   image: neo4j:latest
+  #   container_name: neo4j
+  #   environment:
+  #     - NEO4J_AUTH=neo4j/password
+  #   ports:
+  #     - "7474:7474"  # HTTP
+  #     - "7687:7687"  # Bolt
+  #   volumes:
+  #     - neo4j_data:/data
+  #   networks:
+  #     - bigdata-network
+
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: mongodb
+  #   environment:
+  #     - MONGO_INITDB_ROOT_USERNAME=admin
+  #     - MONGO_INITDB_ROOT_PASSWORD=password
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   networks:
+  #     - bigdata-network
+
+  # valkey:
+  #   image: valkey/valkey:latest
+  #   container_name: valkey
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - valkey_data:/data
+  #   networks:
+  #     - bigdata-network
+
+volumes:
+  clickhouse_data:
+  cassandra_data:
+  neo4j_data:
+  mongodb_data:
+  valkey_data:
+  postgresdata:
+
+networks:
+  bigdata-network:
+    driver: bridge
+  
