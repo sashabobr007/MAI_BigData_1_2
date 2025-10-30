@@ -1,39 +1,44 @@
 services:
-  db:
-    image: postgres:15
-    container_name: highload_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: highload
-      POSTGRES_DB: highload_db
-      PGDATA: "/var/lib/postgresql/data/pgdata"
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - postgresdata:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d
-      - ./data:/tmp/data
-    ports:
-      - 5432:5432
-    networks:
-      - bigdata-network
+  # db:
+  #   image: postgres:15
+  #   container_name: highload_db
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: highload
+  #     POSTGRES_DB: highload_db
+  #     PGDATA: "/var/lib/postgresql/data/pgdata"
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #   volumes:
+  #     - postgresdata:/var/lib/postgresql/data
+  #     - ./init:/docker-entrypoint-initdb.d
+  #     - ./data:/tmp/data
+  #   ports:
+  #     - 5432:5432
+  #   networks:
+  #     - bigdata-network
 
-  pyspark-notebook:
-    image: ruslanmv/pyspark-notebook:3.1.2
-    ports:
-      - "8888:8888"
-    environment:
-      - GRANT_SUDO=yes
-    user: root
-    volumes:
-      - ./postgresql-42.7.8.jar:/opt/spark/jars/postgresql-42.7.8.jar
-      - ./clickhouse-jdbc-0.9.2-all-dependencies.jar:/opt/spark/jars/clickhouse-jdbc-0.9.2-all-dependencies.jar
-      - ./notebooks:/home/jovyan/work
-    networks:
-      - bigdata-network
+  # pyspark-notebook:
+  #   image: ruslanmv/pyspark-notebook:3.1.2
+  #   ports:
+  #     - "8888:8888"
+  #   environment:
+  #     - GRANT_SUDO=yes
+  #   user: root
+  #   command: >
+  #     sh -c "
+  #       echo 'Запуск PySpark-скрипта...' &&
+  #       python /home/jovyan/work/ETL.py
+  #     "
+  #   volumes:
+  #     - ./postgresql-42.7.8.jar:/opt/spark/jars/postgresql-42.7.8.jar
+  #     - ./clickhouse-jdbc-0.9.2-all-dependencies.jar:/opt/spark/jars/clickhouse-jdbc-0.9.2-all-dependencies.jar
+  #     - ./notebooks:/home/jovyan/work
+  #   networks:
+  #     - bigdata-network
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
